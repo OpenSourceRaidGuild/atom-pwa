@@ -35,7 +35,85 @@ function ListItemSwipeAction({
   const mcFrontDiv = React.useRef<HammerManager | null>(null);
   const frontDivAnimation = React.useRef<anime.AnimeInstance | null>(null);
 
-  React.useLayoutEffect(() => {
+  React.useEffect(() => {
+    function onPan(event: HammerInput) {
+      const { translateX, lastPosition } = state;
+      const { deltaX } = event;
+
+      if (frontDivAnimation.current) {
+        frontDivAnimation.current.pause();
+        frontDivAnimation.current = null;
+      }
+
+      let frontPosition = lastPosition + deltaX;
+
+      if (frontPosition < 0) {
+        frontPosition = 0;
+      }
+
+      if (event.isFinal) {
+        onFinal(frontPosition);
+      } else {
+        setState({
+          ...state,
+          translateX: `${frontPosition}px`,
+        });
+      }
+    }
+
+    function onFinal(currentPosition: number) {
+      const swipableWidth = frontDiv.current!.getBoundingClientRect().width;
+      const triggerDelete = currentPosition / swipableWidth > 0.25;
+      const positionTarget = triggerDelete ? swipableWidth : 0;
+
+      const animateObject = { position: currentPosition };
+      frontDivAnimation.current = anime({
+        complete: () => {
+          if (triggerDelete) {
+            onAction();
+          }
+        },
+        duration: 250,
+        easing: "linear",
+        position: positionTarget,
+        targets: animateObject,
+        update: () => {
+          setState({
+            ...state,
+            lastPosition: animateObject.position,
+            translateX: `${animateObject.position}px`,
+          });
+        },
+      });
+    }
+
+    function onAction() {
+      const animateObject = {
+        height: frontDiv.current!.clientHeight,
+        opacity: 1,
+      };
+
+      anime({
+        complete: () => {
+          if (props.onAction) {
+            props.onAction();
+          }
+        },
+        duration: 250,
+        easing: "linear",
+        height: 0,
+        opacity: 0,
+        targets: animateObject,
+        update: () => {
+          setState({
+            ...state,
+            height: `${animateObject.height}px`,
+            opacity: animateObject.opacity,
+          });
+        },
+      });
+    }
+
     mcFrontDiv.current = new Hammer(frontDiv.current!);
 
     mcFrontDiv.current
@@ -45,87 +123,9 @@ function ListItemSwipeAction({
     return () => {
       mcFrontDiv.current?.destroy();
     };
-  }, []);
+  });
 
   const { translateX, opacity, height } = state;
-
-  function onPan(event: HammerInput) {
-    const { translateX, lastPosition } = state;
-    const { deltaX } = event;
-
-    if (frontDivAnimation.current) {
-      frontDivAnimation.current.pause();
-      frontDivAnimation.current = null;
-    }
-
-    let frontPosition = lastPosition + deltaX;
-
-    if (frontPosition < 0) {
-      frontPosition = 0;
-    }
-
-    if (event.isFinal) {
-      onFinal(frontPosition);
-    } else {
-      setState({
-        ...state,
-        translateX: `${frontPosition}px`,
-      });
-    }
-  }
-
-  function onFinal(currentPosition: number) {
-    const swipableWidth = frontDiv.current!.getBoundingClientRect().width;
-    const triggerDelete = currentPosition / swipableWidth > 0.25;
-    const positionTarget = triggerDelete ? swipableWidth : 0;
-
-    const animateObject = { position: currentPosition };
-    frontDivAnimation.current = anime({
-      complete: () => {
-        if (triggerDelete) {
-          onAction();
-        }
-      },
-      duration: 250,
-      easing: "linear",
-      position: positionTarget,
-      targets: animateObject,
-      update: () => {
-        setState({
-          ...state,
-          lastPosition: animateObject.position,
-          translateX: `${animateObject.position}px`,
-        });
-      },
-    });
-  }
-
-  function onAction() {
-    const animateObject = {
-      height: frontDiv.current!.clientHeight,
-      opacity: 1,
-    };
-
-    anime({
-      complete: () => {
-        if (props.onAction) {
-          props.onAction();
-        }
-      },
-      duration: 250,
-      easing: "linear",
-      height: 0,
-      opacity: 0,
-      targets: animateObject,
-      update: () => {
-        setState({
-          ...state,
-          height: `${animateObject.height}px`,
-          opacity: animateObject.opacity,
-        });
-      },
-    });
-  }
 
   return (
     <div
