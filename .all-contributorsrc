@@ -143,7 +143,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/49603590?v=4",
       "profile": "https://tigerabrodi.dev/",
       "contributions": [
-        "test"
+        "test",
+        "code"
       ]
     },
     {
@@ -176,7 +177,7 @@
   ],
   "contributorsPerLine": 7,
   "projectName": "atom-pwa",
-  "projectOwner": "HorusGoul",
+  "projectOwner": "OpenSourceRaidGuild",
   "repoType": "github",
   "repoHost": "https://github.com",
   "skipCi": true,
